@@ -1,58 +1,41 @@
 use std::{fs::read_to_string};
+use regex::Regex;
+
 
 fn main() {
+    let input = read_to_string("./inputs/3.txt").unwrap();
+    let expression = r"(mul[(][0-9]{1,3}[,][0-9]{1,3}[)]|don[']t[(][)])|(do[(][)])";
+    let regex = Regex::new(expression).expect("Regex issue");
+
+
+    let mut enabled = true;
     let mut result = 0;
-    for line in read_to_string("./inputs/sample.txt").unwrap().lines() {
-        let parts: Vec<i32> = line.split(" ")
-        .map(|e| e.parse::<i32>().expect("Parse fail"))
-        .collect();
+    for c in regex.find_iter(&input) {
+        //println!("{}", c.as_str());
 
-        let mut r = is_safe(&parts);
-        
-        for i in 0..parts.len() {
-            let mut c = parts.clone();
-            c.remove(i);
-            r += is_safe(&c);
+        let s = c.as_str();
+        if s.eq("don't()") {
+            enabled = false;
+            continue;
         }
-
-
-        if r > 0 {
-            result += 1;
+        if s.eq("do()") {
+            enabled = true;
+            continue;
+        }
+        if enabled {
+            result += compute(s);
         }
     }
-    println!("Number of safe rows: {}", result);
+    println!("Result is: '{result}'")
 }
 
-fn is_safe(v: &Vec<i32>) ->  i32 {
+fn compute(val: &str) -> i128 {
 
-    let fm = mode(v[0], v[1]);
+    let vals = &val[4..val.len() - 1];
+    let parts: Vec<_> = vals.split(",").collect();
+    let first: i128 = parts.first().expect("Couldnt find first").parse().expect("couldnt parse");
+    let second: i128 = parts.last().expect("Couldnt find last").parse().expect("couldnt parse");
 
-    for i in 0..v.len() - 1 {
-        let left: i32 = v[i];
-        let right: i32 = v[i + 1];
-        if fm != mode(left, right) {            
-            return 0;
-        }
-
-        let distance = abs(left - right);
-        if distance < 1 || distance > 3 {
-            return 0;
-        }
-    }
-    return 1;
+    return first * second;
 }
 
-fn mode(left: i32, right: i32) -> i32 {
-    if left > right {
-        return 1;
-    }
-    else {
-        return -1;
-    }
-}
-
-fn abs(i: i32) -> i32 {
-    if i < 0
-    { return -i} 
-    else { return i;}
-}
