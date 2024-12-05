@@ -1,65 +1,71 @@
 use std::{fs::read_to_string};
 
 fn main() {
-    let input = read_to_string("./inputs/4.txt").unwrap();
-    let grid = input.lines()
-        .map(|l| l.chars())
-        .map(|l| l.collect::<Vec<char>>())
-        .collect::<Vec<Vec<char>>>();
+    let input = read_to_string("./inputs/5.txt").unwrap();
+    let str_lines: Vec<&str> = input.lines().collect();
+
+
+    let mut orders: Vec<Order> = vec![];
+    let mut updates: Vec<Vec<i32>> = vec![];
 
 
 
-    let ret = search_vertical(&grid) ;
-    println!("Result is {ret}");
-}
+    for ln in str_lines {
+        if ln.contains("|") {
+            let s = ln.split("|");
+            let o = from_vector(s);
+             
+            orders.push(o)
+        }
 
+        if ln.contains(",") {
+            let p: Vec<i32> = ln.split(",")
+                .map(|s| s.parse::<i32>().expect("Blew up parsing string"))
+                .collect();
 
-fn search_vertical(grid: &Vec<Vec<char>>) -> u128 {
-    let mut ret = 0;
-
-    for i in 0..grid[0].len() - 2 {
-        for j in 0..grid.len()- 2 {
-
-            if grid[i][j] == 'M' &&
-                grid[i + 1][j + 1 ] == 'A' &&
-                grid[i + 2][j + 2] == 'S' &&
-                grid[i + 2][j] == 'M' &&
-                grid[i][j + 2] == 'S'
-                {
-                    ret += 1;
-                    continue;
-                }
-
-                if grid[i][j] == 'S' &&
-                    grid[i + 1][j + 1 ] == 'A' &&
-                    grid[i + 2][j + 2] == 'M' &&
-                    grid[i + 2][j] == 'S' &&
-                    grid[i][j + 2] == 'M'
-                {
-                    ret += 1;
-                    continue;
-                }
-
-                if grid[i][j] == 'S' &&
-                    grid[i + 1][j + 1 ] == 'A' &&
-                    grid[i + 2][j + 2] == 'M' &&
-                    grid[i + 2][j] == 'M' &&
-                    grid[i][j + 2] == 'S'
-                    {
-                        ret += 1;
-                        continue;
-                    }
-
-                    if grid[i][j] == 'M' &&
-                    grid[i + 1][j + 1 ] == 'A' &&
-                    grid[i + 2][j + 2] == 'S' &&
-                    grid[i + 2][j] == 'S' &&
-                    grid[i][j + 2] == 'M'
-                    {
-                        ret += 1;
-                        continue;
-                    }
+            updates.push(p);
         }
     }
-    return ret;
+
+    let mut result = 0;
+    'outer: for u in updates {
+        for i in 1..u.len() {
+            let update: i32 = u[i];
+            let previous: &[i32] =  &u[0..i-1];
+            if has_illegals(orders.clone(), previous, update) {
+                continue 'outer;
+            }
+        }
+        let mid = u.len() / 2;
+        result += u[mid];
+        println!("Blah: {}", u[mid]);
+    }
+
+
+
+    println!("Result: {}", result);
+}
+
+#[derive(Clone)]
+struct Order {
+    left: i32,
+    right: i32
+}
+
+fn from_vector(vs: std::str::Split<'_, &str>) -> Order {
+    let v: Vec<&str> = vs.collect();
+    Order{
+        left: v[0].parse::<i32>().expect("Failed to parse"),
+        right: v[1].parse::<i32>().expect("Failed to parse")}
+}
+
+fn has_illegals(orderings: Vec<Order>, previous: &[i32], v: i32) -> bool {
+    for p in previous {
+        for o in orderings.clone() {
+            if o.left == v && o.right == (p + 0){
+                return true;
+            }
+        }
+    }
+    return false;
 }
