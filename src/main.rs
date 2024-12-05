@@ -1,4 +1,4 @@
-use std::{fs::read_to_string};
+use std::{fs::read_to_string, cmp::Ordering};
 
 fn main() {
     let input = read_to_string("./inputs/5.txt").unwrap();
@@ -32,13 +32,16 @@ fn main() {
         for i in 1..u.len() {
             let update: i32 = u[i];
             let previous: &[i32] =  &u[0..i-1];
+
             if has_illegals(orders.clone(), previous, update) {
+                let mut c = u.clone();
+                c.sort_by(|x, y| compare(&orders, x, y));
+                let b = c[c.len() / 2];
+                println!("{b}");
+                result += b;
                 continue 'outer;
             }
         }
-        let mid = u.len() / 2;
-        result += u[mid];
-        println!("Blah: {}", u[mid]);
     }
 
 
@@ -50,6 +53,23 @@ fn main() {
 struct Order {
     left: i32,
     right: i32
+}
+
+fn compare(ord: &Vec<Order>, a: &i32, b: &i32) -> Ordering {
+
+    for o in ord {
+        if o.left == (a + 0) && o.right == (b + 0) {
+            return Ordering::Less;
+        }
+    }
+
+    for o in ord {
+        if o.left == (b + 0) && o.right == (a + 0) {
+            return Ordering::Greater;
+        }
+    }
+
+    return Ordering::Equal;
 }
 
 fn from_vector(vs: std::str::Split<'_, &str>) -> Order {
