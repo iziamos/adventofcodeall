@@ -1,4 +1,5 @@
-use std::{fs::read_to_string};
+use std::fs::read_to_string;
+use std::collections::HashSet;
 
 fn main() {
     let input = read_to_string("./inputs/6.txt").unwrap();
@@ -7,27 +8,73 @@ fn main() {
             .map(|s| s.chars().collect())
             .collect();
 
-    let mut result = 0;
+    let mut placements: HashSet<Position> = HashSet::new();
 
-    let mut p = find_start_position(&grid);
-    loop {
-        let n = next_position(&grid, &p);
-        if grid[n.y][n.x] == '.' {
-            result += 1;
-            grid[n.y][n.x] = '@';
-        }
+    let z = find_start_position(&grid);
+    let mut p = z.clone();
 
-        if  grid[n.y][n.x] == '#' {
+    while can_proceed(&grid, &p){
+        let n = next_position( &p);
+
+        if grid[n.y][n.x] == '#' {
             p = rotate(&p);
         }
         else {
+            if n.x == z.x && n.y == z.y {
+                p = n;
+                continue;
+            }
+
+            if grid[n.y][n.x] == '+' {
+                p = n;
+                continue;
+            }
+
+            grid[n.y][n.x] = '#';
+            if see_if_i_end_up_in_loop(&mut grid, &p) {
+                placements.insert(n);
+            }
+
+            grid[n.y][n.x] = '+';
             p = n;
         }
-        println!("{result}");
+    }
+
+    println!("Result is: '{}'", placements.len());
+
+}
+
+fn see_if_i_end_up_in_loop (grid: &mut Vec<Vec<char>>, start: &Position) -> bool {
+    let mut visited: Vec<Position> = vec![];
+    let mut p = start.clone();
+
+    while can_proceed(&grid, &p) {
+        let n = next_position(&p);
+
+        if grid[n.y][n.x] != '#' {
+            p = n;
+        }
+        else {
+            if visited.contains(&p) {
+                return true;
+            }
+            visited.push(p);
+            p = rotate(&p);
+        }
+    }
+    return false;
+}
+
+fn can_proceed (grid: &Vec<Vec<char>>, current: &Position) -> bool {
+    match current.direction {
+        Direction::Up => return current.y != 0,
+        Direction::Left => return current.x != 0,
+        Direction::Right => return current.x != grid[0].len() - 1,
+        Direction::Down => return current.y != grid.len() - 1
     }
 }
 
-fn next_position (grid: &Vec<Vec<char>>, current: &Position) -> Position {
+fn next_position (current: &Position) -> Position {
     return match current.direction {
         Direction::Up => Position{x: current.x, y : current.y - 1, direction: current.direction},
         Direction::Left => Position{x: current.x - 1, y: current.y, direction: current.direction},
@@ -66,20 +113,14 @@ fn find_start_position(grid: &Vec<Vec<char>>) -> Position{
     panic!("Couldnt find starting position.");
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Position {
     x: usize,
     y: usize,
     direction: Direction
 }
 
-enum State {
-    Blocked,
-    Visited,
-    Unvisited
-}
-
-
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
     Up,
     Left,
