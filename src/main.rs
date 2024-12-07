@@ -23,13 +23,24 @@ fn main() {
 
 fn is_valid(v: u128, values: &Vec<u128>) -> bool{
         let mask =  (1 << values.len()) - 1;
+        let mask2 =  (1 << values.len()) - 1;
 
+        for m in 0..mask2 {
         for i in 0..mask {
             let mut r: u128 = values[0];
             for j in 1..values.len() {
                 // println!("{i} {j}");
                 let addition = (1 << j - 1) & i == 0;
-                if addition {
+                let concat = (1 << j - 1) & m == 0; // we do the concat worktwice
+
+                if concat {
+                    let d = count_digits(values[j]);
+                    for _a in 0..d {
+                        r *= 10;
+                    }
+                    r += values[j];
+                }
+                else if addition {
                     r += values[j];
                 }
                 else {
@@ -41,5 +52,17 @@ fn is_valid(v: u128, values: &Vec<u128>) -> bool{
                 return true;
             }
         }
+        }
         return false;
+}
+
+
+fn count_digits(num: u128) -> i32 {
+    let mut count = 0;
+    let mut n = num;
+    while n > 0 {
+        count += 1;
+        n /= 10;
+    }
+    if count == 0 { 1 } else { count }
 }
