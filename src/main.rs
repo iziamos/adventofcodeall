@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt, fs::read_to_string};
 
 
 fn main() {
-    let input = read_to_string("./inputs/s.txt").unwrap();
+    let input = read_to_string("./inputs/8.txt").unwrap();
     let mut grid: Vec<Vec<char>> =
        input.lines()
             .map(|s| s.chars().collect())
@@ -21,7 +21,7 @@ fn main() {
         antinodes.extend(at);
     }
 
-    for a in antinodes {
+    for a in &antinodes {
         grid[a.i as usize][a.j as usize] = '#';
     }
     for i in 0..grid.len() {
@@ -32,19 +32,27 @@ fn main() {
     }
     println!();
 
-    // println!("Counted {} unique antinodes", antinodes.len());
+    for a in &antinodes {
+        println!("Antinode: {}", a);
+    }
+
+    println!("Counted {} unique antinodes", antinodes.len());
 }
 
 fn get_antinodes(grid: &Vec<Vec<char>>, antennas: &Vec<Position>) -> Vec<Position> {
     let mut ret = vec![];
 
-    for b in 0..antennas.len() {
+    for b in 0..antennas.len() - 1 {
         for h in 1..antennas.len() {
+
             let mut first = antennas[b];
             let mut second = antennas[h];
 
             let idistance = second.i.abs_diff(first.i);
             let jdistance = second.j.abs_diff(first.j);
+
+            ret.push(first);
+            ret.push(second);
 
             if first.i > second.i &&
                first.j > second.j { // A
@@ -105,7 +113,7 @@ fn get_antinodes(grid: &Vec<Vec<char>>, antennas: &Vec<Position>) -> Vec<Positio
                     }
                 }
                 loop {
-                    let p = Position{i: first.i + idistance as i32, j: first.j - jdistance as i32};
+                    let p = Position{i: second.i + idistance as i32, j: second.j - jdistance as i32};
                     if is_in_grid(grid, &p) {
                         ret.push(p);
                         second = p;
@@ -115,7 +123,7 @@ fn get_antinodes(grid: &Vec<Vec<char>>, antennas: &Vec<Position>) -> Vec<Positio
                     }
                 }
             }
-            if first.i < second.i &&
+            else if first.i < second.i &&
                first.j < second.j { // D
                 loop {
                     let p = Position{i: first.i - idistance as i32, j: first.j - jdistance as i32};
@@ -147,7 +155,10 @@ fn is_in_grid(grid: &Vec<Vec<char>>, p: &Position) -> bool {
     if grid.len() == 0 {
         return false;
     }
-    p.i < grid.len()  as i32 && p.j < grid[0].len() as i32
+    p.i > -1 &&
+    p.j > -1 &&
+    p.i < grid.len() as i32 &&
+    p.j < grid[0].len() as i32
 }
 
 fn find_antennas(grid: &Vec<Vec<char>>, visited: &mut Vec<char>) -> Vec<Position> {
@@ -167,7 +178,7 @@ fn find_antennas(grid: &Vec<Vec<char>>, visited: &mut Vec<char>) -> Vec<Position
             }
 
             if c == a {
-                ret.push(Position { i: i as i32, j: j as i32 });
+                ret.push(Position { i: i as i32, j: j as i32});
             }
         }
     }
@@ -178,7 +189,7 @@ fn find_antennas(grid: &Vec<Vec<char>>, visited: &mut Vec<char>) -> Vec<Position
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Position {
     i: i32,
-    j: i32
+    j: i32,
 }
 
 impl fmt::Display for Position {
