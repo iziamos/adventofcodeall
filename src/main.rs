@@ -2,8 +2,8 @@ use std::{collections::HashSet, fmt, fs::read_to_string};
 
 
 fn main() {
-    let input = read_to_string("./inputs/8.txt").unwrap();
-    let  grid: Vec<Vec<char>> =
+    let input = read_to_string("./inputs/s.txt").unwrap();
+    let mut grid: Vec<Vec<char>> =
        input.lines()
             .map(|s| s.chars().collect())
             .collect();
@@ -21,18 +21,18 @@ fn main() {
         antinodes.extend(at);
     }
 
-    // for a in antinodes {
-    //     grid[a.i][a.j] = '#';
-    // }
-    // for i in 0..grid.len() {
-    //     for j in 0..grid[0].len() {
-    //         print!("{}", grid[i][j]);
-    //     }
-    //     println!();
-    // }
-    //println!();
+    for a in antinodes {
+        grid[a.i as usize][a.j as usize] = '#';
+    }
+    for i in 0..grid.len() {
+        for j in 0..grid[0].len() {
+            print!("{}", grid[i][j]);
+        }
+        println!();
+    }
+    println!();
 
-    println!("Counted {} unique antinodes", antinodes.len());
+    // println!("Counted {} unique antinodes", antinodes.len());
 }
 
 fn get_antinodes(grid: &Vec<Vec<char>>, antennas: &Vec<Position>) -> Vec<Position> {
@@ -40,70 +40,102 @@ fn get_antinodes(grid: &Vec<Vec<char>>, antennas: &Vec<Position>) -> Vec<Positio
 
     for b in 0..antennas.len() {
         for h in 1..antennas.len() {
-            let first = antennas[b];
-            let second = antennas[h];
+            let mut first = antennas[b];
+            let mut second = antennas[h];
 
             let idistance = second.i.abs_diff(first.i);
             let jdistance = second.j.abs_diff(first.j);
 
             if first.i > second.i &&
-               first.j > second.j {
-
-                if second.i >= idistance && second.j >= jdistance{
-                    let a = Position {i: second.i - idistance, j: second.j - jdistance};
-                    ret.push(a);
+               first.j > second.j { // A
+                loop {
+                    let p = Position{i: first.i + idistance as i32, j: first.j + jdistance as i32};
+                    if is_in_grid(grid, &p) {
+                        ret.push(p);
+                        first = p;
+                    }
+                    else {
+                        break;
+                    }
                 }
-
-                let b = Position {i: first.i + idistance , j: first.j + jdistance};
-                if is_in_grid(&grid, &b) {
-                    ret.push(b);
+                loop {
+                    let p = Position{i: second.i - idistance as i32, j: second.j - jdistance as i32};
+                    if is_in_grid(grid, &p) {
+                        ret.push(p);
+                        second = p;
+                    }
+                    else {
+                        break;
+                    }
                 }
             }
             if first.i > second.i &&
-               first.j < second.j {
-
-                if first.j >= jdistance {
-                    let a = Position {i: first.i + idistance, j: first.j - jdistance};
-                    if is_in_grid(&grid, &a) {
-                        ret.push(a);
+               first.j < second.j { // B
+                loop {
+                    let p = Position{i: first.i + idistance as i32, j: first.j - jdistance as i32};
+                    if is_in_grid(grid, &p) {
+                        ret.push(p);
+                        first = p;
+                    }
+                    else {
+                        break;
                     }
                 }
-
-                if second.i >= idistance {
-                    let b = Position {i: second.i - idistance, j: second.j + jdistance};
-                    if is_in_grid(&grid, &b) {
-                        ret.push(b);
+                loop {
+                    let p = Position{i: second.i - idistance as i32, j: second.j + jdistance as i32};
+                    if is_in_grid(grid, &p) {
+                        ret.push(p);
+                        second = p;
                     }
-                }
-            }
-            if first.i < second.i &&
-               first.j > second.j {
-
-                if first.i >= idistance {
-                    let a = Position {i: first.i - idistance, j: first.j + jdistance};
-                    if is_in_grid(&grid, &a) {
-                        ret.push(a);
-                    }
-                }
-
-                if second.j >= jdistance {
-                    let b = Position {i: second.i + idistance, j: second.j - jdistance};
-                    if is_in_grid(&grid, &b) {
-                        ret.push(b);
+                    else {
+                        break;
                     }
                 }
             }
             if first.i < second.i &&
-               first.j < second.j  {
-
-                if first.i >= idistance && first.j >= jdistance {
-                    let a = Position {i: first.i - idistance, j: first.j - jdistance};
-                    ret.push(a);
+               first.j > second.j { // C
+                loop {
+                    let p = Position{i: first.i - idistance as i32, j: first.j + jdistance as i32};
+                    if is_in_grid(grid, &p) {
+                        ret.push(p);
+                        first = p;
+                    }
+                    else {
+                        break;
+                    }
                 }
-
-                let b = Position {i: second.i + idistance, j: second.j + jdistance};
-                if is_in_grid(&grid, &b) {
-                    ret.push(b);
+                loop {
+                    let p = Position{i: first.i + idistance as i32, j: first.j - jdistance as i32};
+                    if is_in_grid(grid, &p) {
+                        ret.push(p);
+                        second = p;
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+            if first.i < second.i &&
+               first.j < second.j { // D
+                loop {
+                    let p = Position{i: first.i - idistance as i32, j: first.j - jdistance as i32};
+                    if is_in_grid(grid, &p) {
+                        ret.push(p);
+                        first = p;
+                    }
+                    else {
+                        break;
+                    }
+                }
+                loop {
+                    let p = Position{i: second.i + idistance as i32, j: second.j + jdistance as i32};
+                    if is_in_grid(grid, &p) {
+                        ret.push(p);
+                        second = p;
+                    }
+                    else {
+                        break;
+                    }
                 }
             }
         }
@@ -115,7 +147,7 @@ fn is_in_grid(grid: &Vec<Vec<char>>, p: &Position) -> bool {
     if grid.len() == 0 {
         return false;
     }
-    p.i < grid.len() && p.j < grid[0].len()
+    p.i < grid.len()  as i32 && p.j < grid[0].len() as i32
 }
 
 fn find_antennas(grid: &Vec<Vec<char>>, visited: &mut Vec<char>) -> Vec<Position> {
@@ -135,7 +167,7 @@ fn find_antennas(grid: &Vec<Vec<char>>, visited: &mut Vec<char>) -> Vec<Position
             }
 
             if c == a {
-                ret.push(Position { i, j });
+                ret.push(Position { i: i as i32, j: j as i32 });
             }
         }
     }
@@ -145,8 +177,8 @@ fn find_antennas(grid: &Vec<Vec<char>>, visited: &mut Vec<char>) -> Vec<Position
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct Position {
-    i: usize,
-    j: usize
+    i: i32,
+    j: i32
 }
 
 impl fmt::Display for Position {
