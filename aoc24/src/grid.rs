@@ -1,5 +1,6 @@
 use std::fs::read_to_string;
 use std::fmt;
+use std::ops::{Index, IndexMut};
 
 pub struct Grid{
     data: Vec<Vec<char>>
@@ -7,9 +8,9 @@ pub struct Grid{
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Point {
-    row: usize,
-    col: usize,
-    val: char,
+    pub row: usize,
+    pub col: usize,
+    pub val: char,
 }
 
 impl Grid {
@@ -23,29 +24,29 @@ impl Grid {
         Grid { data: grid }
     }
 
-    fn is_in_bounds(&self, row: isize, col:  isize) -> bool {
+    pub fn is_in_bounds(&self, row: isize, col:  isize) -> bool {
         col > -1 &&
         row > -1 &&
         row < self.data.len() as isize &&
         col < self.data[0].len() as isize
     }
 
-    fn char_at_unsafe(&self, row: isize, col: isize) -> char {
+    pub fn char_at_unsafe(&self, row: isize, col: isize) -> char {
         self.data[row as usize][col as usize]
     }
 
-    fn char_at(&self, row: isize, col: isize) -> Option<char> {
+    pub fn char_at(&self, row: isize, col: isize) -> Option<char> {
         if self.is_in_bounds(row, col) {
             return Some(self.data[row as usize][col as usize])
         }
         None
     }
 
-    fn width(&self) -> usize {
+    pub fn width(&self) -> usize {
         return self.data.len();
     }
 
-    fn height(&self) -> usize {
+    pub fn height(&self) -> usize {
         if self.data.len() == 0 {
             return 0;
         }
@@ -100,6 +101,20 @@ impl fmt::Display for Grid {
             writeln!(f, "{}", row.iter().collect::<String>())?;
         }
         Ok(())
+    }
+}
+
+impl Index<usize> for Grid {
+    type Output = Vec<char>;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index]
+    }
+}
+
+impl IndexMut<usize> for Grid {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.data[index]
     }
 }
 
