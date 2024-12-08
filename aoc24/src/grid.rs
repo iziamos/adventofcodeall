@@ -97,7 +97,6 @@ impl<'a> Iterator for GridIterator<'a> {
 impl fmt::Display for Grid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for row in &self.data {
-            // Join each row of chars into a string and print it
             writeln!(f, "{}", row.iter().collect::<String>())?;
         }
         Ok(())

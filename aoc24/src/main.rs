@@ -1,11 +1,9 @@
-use std::{collections::HashSet, fmt, fs::read_to_string};
-
-use grid::{Grid, Point};
+use grid::Grid;
 
 mod grid;
 
 fn main() {
-    let mut g = grid::Grid::from_file(&"./inputs/s.txt");
+    let mut g = Grid::from_file(&"./inputs/s.txt");
 
     for i in 0..g.width() {
         g[i][0] = '@';
@@ -15,7 +13,6 @@ fn main() {
         println!();
     }
     println!();
-
 
     println!("{}", g);
 }
