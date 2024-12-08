@@ -1,96 +1,156 @@
-use std::{fs::read_to_string, thread};
+use std::{collections::HashSet, fmt, fs::read_to_string};
 
 
 fn main() {
-    let input = read_to_string("./inputs/7.txt").unwrap();
+    let input = read_to_string("./inputs/8.txt").unwrap();
+    let  grid: Vec<Vec<char>> =
+       input.lines()
+            .map(|s| s.chars().collect())
+            .collect();
 
-    let mut result = 0;
+    let mut antinodes: HashSet<Position> = HashSet::new();
+    let mut visited = vec![];
 
-    let clone = input.clone();
-    let clone2 = input.clone();
-
-    let handle1 = thread::spawn(move || {
-        let lines: Vec<&str> = clone.lines().collect();
-        let split_lines = lines.split_at(lines.len() / 2);
-
-        let mut r = 0;
-        for line  in split_lines.0 {
-            r += process_line(line);
+    loop {
+        let a = find_antennas(&grid, &mut visited);
+        if a.is_empty() {
+            break;
         }
-        r
-    });
 
-    let handle2 = thread::spawn(move || {
-        let lines: Vec<&str> = clone2.lines().collect();
-        let split_lines = lines.split_at(lines.len() / 2);
+        let at = get_antinodes(&grid, &a);
+        antinodes.extend(at);
+    }
 
-        let mut r = 0;
-        for line  in split_lines.1 {
-            r += process_line(line);
-        }
-        r
-    });
+    // for a in antinodes {
+    //     grid[a.i][a.j] = '#';
+    // }
+    // for i in 0..grid.len() {
+    //     for j in 0..grid[0].len() {
+    //         print!("{}", grid[i][j]);
+    //     }
+    //     println!();
+    // }
+    //println!();
 
-    result += handle1.join().unwrap();
-    result += handle2.join().unwrap();
-
-    println!("Result: {result}");
+    println!("Counted {} unique antinodes", antinodes.len());
 }
 
-fn process_line(line: &str) -> u128 {
-    let split: Vec<&str> = line.split(": ").collect();
+fn get_antinodes(grid: &Vec<Vec<char>>, antennas: &Vec<Position>) -> Vec<Position> {
+    let mut ret = vec![];
 
-    let head: u128 = split.first().expect("asda").parse::<u128>().expect("Head parse error.");
-    let tail = split.last().expect("blah");
-    let numbers: Vec<u128> = tail.split(" ").map(|n| n.parse::<u128>().expect("oasd qw")).collect();
+    for b in 0..antennas.len() {
+        for h in 1..antennas.len() {
+            let first = antennas[b];
+            let second = antennas[h];
 
+            let idistance = second.i.abs_diff(first.i);
+            let jdistance = second.j.abs_diff(first.j);
 
-    let mask =  (1 << numbers.len()) - 1;
-    let mask2 =  (1 << numbers.len()) - 1;
+            if first.i > second.i &&
+               first.j > second.j {
 
-    for m in 0..mask2 {
-        for i in 0..mask {
-            let mut r: u128 = numbers[0];
-            for j in 1..numbers.len() {
-                let addition = (1 << j - 1) & i == 0;
-                let concat = (1 << j - 1) & m == 0; // we do the concat worktwice
-                if concat {
-                    let d = count_digits(numbers[j]);
-                    for _a in 0..d {
-                        r *= 10;
+                if second.i >= idistance && second.j >= jdistance{
+                    let a = Position {i: second.i - idistance, j: second.j - jdistance};
+                    ret.push(a);
+                }
+
+                let b = Position {i: first.i + idistance , j: first.j + jdistance};
+                if is_in_grid(&grid, &b) {
+                    ret.push(b);
+                }
+            }
+            if first.i > second.i &&
+               first.j < second.j {
+
+                if first.j >= jdistance {
+                    let a = Position {i: first.i + idistance, j: first.j - jdistance};
+                    if is_in_grid(&grid, &a) {
+                        ret.push(a);
                     }
-                    r += numbers[j];
-                }
-                else if addition {
-                    r += numbers[j];
-                }
-                else {
-                    r *= numbers[j];
                 }
 
-                if r > head {
-                    break;
+                if second.i >= idistance {
+                    let b = Position {i: second.i - idistance, j: second.j + jdistance};
+                    if is_in_grid(&grid, &b) {
+                        ret.push(b);
+                    }
                 }
             }
+            if first.i < second.i &&
+               first.j > second.j {
 
-            if r == head {
-                return head;
+                if first.i >= idistance {
+                    let a = Position {i: first.i - idistance, j: first.j + jdistance};
+                    if is_in_grid(&grid, &a) {
+                        ret.push(a);
+                    }
+                }
+
+                if second.j >= jdistance {
+                    let b = Position {i: second.i + idistance, j: second.j - jdistance};
+                    if is_in_grid(&grid, &b) {
+                        ret.push(b);
+                    }
+                }
+            }
+            if first.i < second.i &&
+               first.j < second.j  {
+
+                if first.i >= idistance && first.j >= jdistance {
+                    let a = Position {i: first.i - idistance, j: first.j - jdistance};
+                    ret.push(a);
+                }
+
+                let b = Position {i: second.i + idistance, j: second.j + jdistance};
+                if is_in_grid(&grid, &b) {
+                    ret.push(b);
+                }
             }
         }
     }
-    return 0;
+    return ret;
 }
 
+fn is_in_grid(grid: &Vec<Vec<char>>, p: &Position) -> bool {
+    if grid.len() == 0 {
+        return false;
+    }
+    p.i < grid.len() && p.j < grid[0].len()
+}
 
-fn count_digits(num: u128) -> u32 {
-    if num == 0 {
-        return 1;
+fn find_antennas(grid: &Vec<Vec<char>>, visited: &mut Vec<char>) -> Vec<Position> {
+    let mut a = '.';
+    let mut ret: Vec<Position> = vec![];
+
+    for i in 0..grid.len() {
+        for j in 0..grid[0].len() {
+            let c = grid[i][j];
+
+            if c == '.' || visited.contains(&c) {
+                continue;
+            }
+
+            if a == '.' {
+                a = c;
+            }
+
+            if c == a {
+                ret.push(Position { i, j });
+            }
+        }
     }
-    let mut count = 0;
-    let mut n = num;
-    while n > 0 {
-        count += 1;
-        n /= 10;
+    visited.push(a);
+    return ret;
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct Position {
+    i: usize,
+    j: usize
+}
+
+impl fmt::Display for Position {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Position({}, {})", self.i, self.j)
     }
-    count
 }
